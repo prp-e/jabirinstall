@@ -1,0 +1,33 @@
+#!/bin/sh
+###########################################
+####### JabirOS Installation Script #######
+####### Author:Muhammadreza Haghiri #######
+#######      License : BSD          #######
+###########################################
+case $1 in
+     part)
+     read -p "Enter device name:" $DEV
+     gpart create -s gpt /dev/$DEV
+     gpart add -s 64k -t freebsd-boot /dev/$DEV
+     gpart add -s 1g -t freebsd-swap /dev/$DEV
+     gpart add -t freebsd-ufs /dev/$DEV
+     gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 1 /dev/$DEV
+     newfs -U -j -L root /dev/"$DEV"p3
+     swapon /dev/"$DEV"p2
+     mount /dev/"$DEV"p3 /mnt
+     ;;
+     install-base)
+     cd /mnt
+     tar -xvf /system.txz
+     read -p "What's your Timezone?" $TZ
+     ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
+     echo "/dev/"$DEV"p2  none  swap sw 0 0" > /mnt/etc/fstab
+     echo "/dev/"$DEV"p3   /     ufs rw 1 1" >> /mnt/etc/fstab
+     ;;
+     config)
+     chroot /mnt
+     ;;
+esac
+
+
+
